@@ -5,32 +5,42 @@ from scheduler import Scheduler
 from metrics import GanttEntry
 
 class RoundRobinScheduler(Scheduler):
+    """ Implementación del planificador Round-Robin con quantum fijo. """
+
     def __init__(self, quantum: int):
         if quantum <= 0:
             raise ValueError("El quantum debe ser un entero positivo.")
         self.quantum = quantum
 
     def planificar(self, procesos: List[Proceso]) -> List[GanttEntry]:
-        """Planifica los procesos usando el algoritmo Round-Robin con un quantum fijo."""
-        gantt = []
+        """
+        Planifica los procesos utilizando el algoritmo Round-Robin.
+        
+        :param procesos: Lista de objetos Proceso a planificar.
+        :return: Lista de entradas para el diagrama de Gantt.
+        """
         tiempo_actual = 0
-        cola_procesos = procesos[:]  # Copia de la lista para iterar sin modificar la original
+        gantt = []
+        cola = procesos[:]  # Copia de la lista de procesos para manipulación
 
-        while cola_procesos:
-            proceso = cola_procesos.pop(0)  # Tomamos el primer proceso en la cola
+        while cola:
+            proceso = cola.pop(0)  # Tomar el primer proceso de la cola
             
             if proceso.tiempo_inicio is None:
-                proceso.iniciar(tiempo_actual)  # Asignamos el tiempo de inicio si no lo tiene
+                proceso.iniciar(tiempo_actual)
 
             tiempo_ejecucion = min(self.quantum, proceso.tiempo_restante)
-            tiempo_actual += tiempo_ejecucion
-            proceso.tiempo_restante -= tiempo_ejecucion
-            
-            gantt.append((proceso.pid, tiempo_actual - tiempo_ejecucion, tiempo_actual))
+            proceso.ejecutar(tiempo_ejecucion)
+            tiempo_fin = tiempo_actual + tiempo_ejecucion
 
+            gantt.append((proceso.pid, tiempo_actual, tiempo_fin))
+            tiempo_actual = tiempo_fin  # Avanza el tiempo global
+            
             if proceso.tiempo_restante > 0:
-                cola_procesos.append(proceso)  # Si queda tiempo por ejecutar, lo volvemos a la cola
+                cola.append(proceso)  # Si el proceso no ha finalizado, vuelve a la cola
             else:
-                proceso.finalizar(tiempo_actual)  # Si termina, registramos su tiempo de finalización
+                proceso.finalizar(tiempo_actual)  # Marca el proceso como finalizado
 
         return gantt
+
+
