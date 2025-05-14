@@ -20,3 +20,4 @@ def test_pid_duplicado():
 def test_duracion_positiva():
     with pytest.raises(ValueError):
         Proceso("P2", -5, 1)
+

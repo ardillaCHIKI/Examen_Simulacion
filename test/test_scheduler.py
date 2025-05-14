@@ -13,3 +13,4 @@ def test_round_robin_planificacion():
     procesos = [Proceso("P1", 10, 2), Proceso("P2", 5, 1), Proceso("P3", 8, 3)]
     gantt = scheduler.planificar(procesos)
     assert len(gantt) > len(procesos)  # Round-Robin ejecuta en ciclos
+
