@@ -1,60 +1,70 @@
-from proceso import Proceso
-from typing import List
 import json
 import csv
+import os
+from typing import List, Optional
+from src.proceso import Proceso
 
 class RepositorioProcesos:
-    """ Clase para gestionar el conjunto de procesos activos con persistencia en JSON y CSV. """
-    
     def __init__(self):
-        self.procesos = {}
+        self.procesos: List[Proceso] = []
 
-    def agregar_proceso(self, proceso: Proceso):
-        """ Agrega un proceso al repositorio, verificando que el PID sea único. """
-        if proceso.pid in self.procesos:
-            raise ValueError(f"El proceso con PID '{proceso.pid}' ya existe.")
-        self.procesos[proceso.pid] = proceso
+    def agregar_proceso(self, proceso: Proceso) -> None:
+        if any(p.pid == proceso.pid for p in self.procesos):
+            raise ValueError(f"PID {proceso.pid} ya existe")
+        self.procesos.append(proceso)
 
     def listar_procesos(self) -> List[Proceso]:
-        """ Devuelve una lista de todos los procesos registrados. """
-        return list(self.procesos.values())
+        return self.procesos
 
-    def eliminar_proceso(self, pid: str):
-        """ Elimina un proceso dado su PID, si existe. """
-        if pid not in self.procesos:
-            raise ValueError(f"No se encontró un proceso con PID '{pid}'.")
-        del self.procesos[pid]
+    def eliminar_proceso(self, pid: str) -> None:
+        self.procesos = [p for p in self.procesos if p.pid != pid]
 
-    def obtener_proceso(self, pid: str) -> Proceso:
-        """ Obtiene un proceso específico por su PID. """
-        if pid not in self.procesos:
-            raise ValueError(f"No se encontró un proceso con PID '{pid}'.")
-        return self.procesos[pid]
+    def obtener_proceso(self, pid: str) -> Optional[Proceso]:
+        for proceso in self.procesos:
+            if proceso.pid == pid:
+                return proceso
+        return None
 
-    def guardar_json(self, archivo: str):
-        """ Guarda los procesos en un archivo JSON. """
-        with open(archivo, "w") as f:
-            json.dump([{ "pid": p.pid, "duracion": p.duracion, "prioridad": p.prioridad } for p in self.procesos.values()], f, indent=4)
+    def guardar_json(self, archivo: str) -> None:
+        datos = [{
+            "pid": p.pid,
+            "duracion": p.duracion,
+            "prioridad": p.prioridad,
+            "tiempo_llegada": p.tiempo_llegada
+        } for p in self.procesos]
+        with open(archivo, 'w') as f:
+            json.dump(datos, f, indent=4)
 
-    def cargar_json(self, archivo: str):
-        """ Carga los procesos desde un archivo JSON, reemplazando los existentes. """
-        with open(archivo, "r") as f:
+    def cargar_json(self, archivo: str) -> None:
+        if not os.path.exists(archivo):
+            self.procesos = []
+            return
+        with open(archivo, 'r') as f:
             datos = json.load(f)
-        self.procesos = {p["pid"]: Proceso(p["pid"], p["duracion"], p["prioridad"]) for p in datos}
+        self.procesos = [Proceso(
+            pid=d["pid"],
+            duracion=d["duracion"],
+            prioridad=d["prioridad"],
+            tiempo_llegada=d["tiempo_llegada"]
+        ) for d in datos]
 
-    def guardar_csv(self, archivo: str):
-        """ Guarda los procesos en un archivo CSV con separador ';'. """
-        with open(archivo, "w", newline="") as f:
-            writer = csv.writer(f, delimiter=";")
-            writer.writerow(["PID", "Duración", "Prioridad"])  # Encabezados
-            for p in self.procesos.values():
-                writer.writerow([p.pid, p.duracion, p.prioridad])
+    def guardar_csv(self, archivo: str) -> None:
+        with open(archivo, 'w', newline='') as f:
+            writer = csv.writer(f, delimiter=';')
+            writer.writerow(["pid", "duracion", "prioridad", "tiempo_llegada"])
+            for p in self.procesos:
+                writer.writerow([p.pid, p.duracion, p.prioridad, p.tiempo_llegada])
 
-    def cargar_csv(self, archivo: str):
-        """ Carga los procesos desde un archivo CSV, reemplazando los existentes. """
-        with open(archivo, "r") as f:
-            reader = csv.reader(f, delimiter=";")
-            next(reader)  # Saltar encabezado
-            self.procesos = {row[0]: Proceso(row[0], int(row[1]), int(row[2])) for row in reader}
-
+    def cargar_csv(self, archivo: str) -> None:
+        if not os.path.exists(archivo):
+            self.procesos = []
+            return
+        with open(archivo, 'r') as f:
+            reader = csv.DictReader(f, delimiter=';')
+            self.procesos = [Proceso(
+                pid=row["pid"],
+                duracion=int(row["duracion"]),
+                prioridad=int(row["prioridad"]),
+                tiempo_llegada=int(row["tiempo_llegada"])
+            ) for row in reader]
 
