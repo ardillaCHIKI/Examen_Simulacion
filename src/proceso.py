@@ -1,4 +1,4 @@
-class Proceso:
+class Proceso(object):
     procesos_existentes = set()  # Conjunto para almacenar los PID existentes
     
     def __init__(self, pid: str, duracion: int, prioridad: int):

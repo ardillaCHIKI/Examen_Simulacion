@@ -1,2 +1,5 @@
 pytest
-typing
+pytest-cov
+gradio
+matplotlib
+pandas
