@@ -1,5 +1,5 @@
 import gradio as gr
-from src.proceso import procesos
+from src.proceso import Proceso
 from src.repositorio import RepositorioProcesos
 from src.Fcfsscheduler import FCFSScheduler
 from src.roundRobinScheduler import RoundRobinScheduler
@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import io
 import base64
 
-# Inicializar el repositorio
 repo = RepositorioProcesos()
 
 def agregar_proceso(pid, duracion, prioridad):
